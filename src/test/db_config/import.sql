@@ -5,6 +5,10 @@ CREATE TABLE IF NOT EXISTS APP_KEYS (
     EXPIRY BIGINT NOT NULL
     );
 
+-- Helpful links for testing
+-- https://codebeautify.org/sha256-hash-generator
+-- https://timestampgenerator.com/1695543307/+00:00
+
 -- Inserting data into the APP_KEYS table
 INSERT INTO APP_KEYS (USERNAME, API_KEY, EXPIRY)
 VALUES ('app1', 'db74c940d447e877d119df613edd2700c4a84cd1cf08beb7cbc319bcfaeab97a', '1695543307'); -- expired
