@@ -1,0 +1,52 @@
+name: CI Build
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - master
+
+jobs:
+  Build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v3
+
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '22'
+
+      - name: Set up Docker Compose
+        run: docker compose up -d
+
+      - name: Wait for container to fill DB and exit
+        run: |
+          sleep 50
+
+      - name: Build project
+        run: ./mvnw clean package -DskipTests
+
+      - name: Run integration tests
+        run: ./mvnw failsafe:integration-test
+
+      - name: Build native executable
+        run: ./mvnw package -DskipTests -Dnative -Dquarkus.native.container-build=true
+
+      - name: Login to Harbor
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.HARBOR_URL }}
+          username: ${{ secrets.HARBOR_USERNAME }}
+          password: ${{ secrets.HARBOR_PASSWORD }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          context: .
+          file: src/main/docker/Dockerfile.native
+          tags: ${{ secrets.HARBOR_URL }}/authn_apikey:${{ github.ref_name }}
